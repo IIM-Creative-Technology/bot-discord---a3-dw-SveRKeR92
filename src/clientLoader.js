@@ -8,11 +8,11 @@ module.exports = {
    */
   createClient: async (intents = []) => {
     if (intents && intents.length > 0 && !intents.includes('GUILD_MESSAGES')) {
-      intents = [...intents, 'GUILD_MESSAGES'];
+      intents = [...intents, 'GUILD_MESSAGES', 'GUILDS'];
     }
 
     if (!intents) {
-      intents = ['GUILD_MESSAGES']
+      intents = ['GUILD_MESSAGES', 'GUILDS']
     }
 
     const client = new Discord.Client({
