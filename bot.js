@@ -39,6 +39,7 @@ clientLoader.createClient(['GUILD_MESSAGES', 'GUILDS', 'GUILD_MEMBERS'])
         bridgeMessage(client, message)
 
         if (frenchBadwords.some(w => `${message.content.toLowerCase()}`.includes(`${w}`))){
+          message.delete()
           message.member.send("Please stay polite when you chat with others")
         }
       }
