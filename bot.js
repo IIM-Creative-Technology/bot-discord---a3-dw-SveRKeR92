@@ -1,6 +1,11 @@
 const clientLoader = require('./src/clientLoader');
 const commandLoader = require('./src/commandLoader');
 const database = require('./database');
+const Discord = require('discord.js');
+const { levelingSystem } = require('./functions/levelingSystem');
+const { bridgeMessage } = require('./functions/bridgeMessage');
+const badwordsList = require("french-badwords-list");
+const frenchBadwords = badwordsList.array;
 require('colors');
 
 const COMMAND_PREFIX = '!';
@@ -9,51 +14,37 @@ clientLoader.createClient(['GUILD_MESSAGES', 'GUILDS', 'GUILD_MEMBERS'])
   .then(async (client) => {
     await commandLoader.load(client);
 
+    client.on('guildMemberAdd', async(member) => {
+      const guild = member.guild;
+      console.log(guild)
+      const newcomerRole = await member.guild.roles.cache.find(r => r.name === "Newcomer");
+      // const role2 = await guild.roles.fetch('940638472912380004')
+      console.log(newcomerRole)
+      // console.log(role2)
+      await member.roles.add(newcomerRole);
+      // OR
+      // await member.roles.add('940638472912380004')
+    });
+    // end guildMemberAdd
+
     client.on('messageCreate', async (message) => {
 
-      // Ne pas tenir compte des messages envoyés par les bots, ou qui ne commencent pas par le préfix
+      
       if (message.author.bot) return;
+      console.log(frenchBadwords)
+      if (!message.content.startsWith(COMMAND_PREFIX)){
+        // Leveling (exo 4)
+        levelingSystem(message)
+        //Shared messages - Server bridge (Exo 5)
+        bridgeMessage(client, message)
 
-      // check if user is in xp table:
-      database.sqlQuery('SELECT * FROM xp WHERE user_id = ?', message.author.id)
-      .then(results => {
-          if (results.length > 0) {
-              //user is in db
-              const data = results[0]
-              database.sqlQuery(`UPDATE xp SET xp_count = ${data.xp_count + 1} WHERE user_id = ?`, message.author.id)
-              .then(() => {
-                message.channel.send(`+1 xp, ${data.xp_count + 1} / ${data.xp_level} to level up. Current level: ${data.level}`)
-                if(data.xp_count + 1 >= data.xp_level){
-                  database.sqlQuery(`UPDATE xp SET xp_count = 0, level=${data.level + 1}, xp_level=${data.xp_level+2} WHERE user_id = ?`, message.author.id)
-                  .then(() => {
-                    message.channel.send(`Congratulations, you are now level ${data.level + 1}`)
-                  }) .catch(error => {
-                    message.channel.send('error occured at leveling up')
-                    console.log(error)
-                  })
-                }
-              }).catch(error =>{
-                message.channel.send('error occured at giving XP')
-                console.log(error)
-              })
+        if (frenchBadwords.some(w => `${message.content.toLowerCase()}`.includes(`${w}`))){
+          message.member.send("Please stay polite when you chat with others")
+        }
+      }
 
-          } else {
-              // user is not in db
-              message.channel.send("author not in database")
-              database.sqlQuery("INSERT INTO xp (user_id, xp_count, xp_level, level) VALUES (?, 0, 4, 1)", message.author.id)
-              .then(
-                message.channel.send(`User ${message.author.username} added to database`)
-              ).catch(error => {
-                message.channel.send("error occured in INSERT query")
-                console.log(error)
-              })
-          }
-      })
-      .catch(error => {
-        message.channel.send("error occured in SELECT query")
-        console.log(error)
-      });
-
+      // !COMMAND
+      // Ne pas tenir compte des messages envoyés par les bots, ou qui ne commencent pas par le préfix
       if (message.author.bot || !message.content.startsWith(COMMAND_PREFIX)) return;
       // On découpe le message pour récupérer tous les mots
       const words = message.content.split(' ');
@@ -68,17 +59,11 @@ clientLoader.createClient(['GUILD_MESSAGES', 'GUILDS', 'GUILD_MEMBERS'])
         await message.delete();
         await message.channel.send(`The ${commandName} does not exist.`);
       }
+      // END !COMMAND
+
+
     });
     // end messageCreate
 
-    client.on('guildMemberAdd', async(member) => {
-      const guild = member.guild;
-      console.log(guild)
-      const role = await guild.roles.fetch('940638472912380004')
-      console.log(role)
-      await member.roles.add(role);
-      // OR
-      // await member.roles.add('940638472912380004')
-    });
-    // end guildMemberAdd
+
   });

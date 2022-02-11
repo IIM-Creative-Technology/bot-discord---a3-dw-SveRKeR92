@@ -12,7 +12,7 @@ module.exports = {
     }
 
     if (!intents) {
-      intents = ['GUILD_MESSAGES', 'GUILDS']
+      intents = ['GUILD_MESSAGES', 'GUILDS', 'GUiLD_MEMBERS']
     }
 
     const client = new Discord.Client({
