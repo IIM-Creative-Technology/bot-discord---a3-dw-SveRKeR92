@@ -31,7 +31,6 @@ clientLoader.createClient(['GUILD_MESSAGES', 'GUILDS', 'GUILD_MEMBERS'])
 
       
       if (message.author.bot) return;
-      console.log(frenchBadwords)
       if (!message.content.startsWith(COMMAND_PREFIX)){
         // Leveling (exo 4)
         levelingSystem(message)
